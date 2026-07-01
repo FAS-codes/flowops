@@ -86,6 +86,27 @@ npm run dev               # http://localhost:5173 (proxies /api to :4000)
 - ✅ **Audit log** — filterable trail with actor, action, and before/after values
   (gated behind the `audit:read` permission).
 
+## What's built (V3, in progress)
+
+- ✅ **Workflow automation builder** — user-defined "when <trigger> and
+  <conditions> then <actions>" rules stored in MongoDB and interpreted by an
+  engine ([automation.service.ts](backend/src/services/automation.service.ts)).
+  Triggers: lead created / stage changed / deal won / task created / completed.
+  Actions: create task, create project, notify, send email — with `{{field}}`
+  templating. Built with a full drag-free rule builder UI.
+- ✅ **Automated tests** — Vitest suite (`npm test`, 23 tests): unit tests for the
+  RBAC matrix and automation engine, plus integration tests (Supertest +
+  in-memory MongoDB) covering auth, **multi-tenant isolation**, RBAC enforcement,
+  and an **end-to-end automation** (win a deal → a task is auto-created).
+
 ## Roadmap
 
-- **V3:** workflow automation builder, BullMQ/Redis jobs, subscriptions, tests, Docker, CI/CD
+- **V3 (remaining):** BullMQ/Redis job queue, subscription plans, Docker, CI/CD
+
+## Testing
+
+```bash
+cd backend && npm test        # runs unit + integration suites once
+```
+Integration tests spin up a throwaway in-memory MongoDB, so they need no running
+database and leave nothing behind.

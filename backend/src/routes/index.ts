@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import auditRoutes from './audit.routes';
 import authRoutes from './auth.routes';
+import automationRoutes from './automation.routes';
 import dashboardRoutes from './dashboard.routes';
 import fileRoutes from './file.routes';
 import leadRoutes from './lead.routes';
@@ -21,5 +22,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/files', fileRoutes);
 router.use('/audit', auditRoutes);
+router.use('/automations', automationRoutes);
 
 export default router;

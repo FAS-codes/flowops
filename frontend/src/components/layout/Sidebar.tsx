@@ -5,7 +5,7 @@ import {
   FolderKanban,
   ScrollText,
   Users,
-  Sparkles,
+  Workflow,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -23,6 +23,9 @@ export function Sidebar() {
   const { role } = useAuth();
   const nav = [
     ...NAV,
+    ...(can(role, 'automation:read')
+      ? [{ to: '/app/automations', label: 'Automations', icon: Workflow }]
+      : []),
     ...(can(role, 'audit:read')
       ? [{ to: '/app/audit', label: 'Audit Log', icon: ScrollText }]
       : []),
@@ -67,10 +70,10 @@ export function Sidebar() {
 
       <div className="p-3">
         <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 p-4 text-white shadow-brand">
-          <Sparkles className="absolute -right-3 -top-3 h-16 w-16 text-white/10" />
-          <p className="text-sm font-semibold">Automations</p>
+          <Workflow className="absolute -right-3 -top-3 h-16 w-16 text-white/10" />
+          <p className="text-sm font-semibold">Workflow automations</p>
           <p className="mt-1 text-xs text-brand-100">
-            Trigger tasks &amp; alerts automatically. Coming in your V3.
+            Trigger tasks, alerts &amp; emails automatically when your data changes.
           </p>
         </div>
       </div>

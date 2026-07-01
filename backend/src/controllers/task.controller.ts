@@ -5,6 +5,7 @@ import { Task, TASK_PRIORITIES, TASK_STATUSES } from '../models/Task';
 import { AppError } from '../utils/AppError';
 import { logActivity } from '../services/activity.service';
 import { notify } from '../services/notification.service';
+import { runAutomations } from '../services/automation.service';
 import { emitToOrg } from '../realtime';
 
 export const createTaskSchema = z.object({
@@ -81,6 +82,12 @@ export async function createTask(req: Request, res: Response) {
       link: `/app/projects/${task.project}`,
     });
   }
+  void runAutomations({
+    orgId: req.orgId!,
+    event: 'task.created',
+    actorId: req.userId!,
+    entity: task.toObject() as unknown as Record<string, unknown>,
+  });
 
   res.status(201).json(task);
 }
@@ -130,6 +137,14 @@ export async function moveTask(req: Request, res: Response) {
       summary: `Moved task "${task.title}" from ${previous} to ${status}`,
       metadata: { before: previous, after: status },
     });
+    if (status === 'done') {
+      void runAutomations({
+        orgId: req.orgId!,
+        event: 'task.completed',
+        actorId: req.userId!,
+        entity: task.toObject() as unknown as Record<string, unknown>,
+      });
+    }
   }
   emitToOrg(req.orgId!, 'task:changed', { project: task.project });
   res.json(task);

@@ -32,7 +32,10 @@ export type Permission =
   | 'task:delete'
   // dashboard / audit
   | 'dashboard:read'
-  | 'audit:read';
+  | 'audit:read'
+  // automations
+  | 'automation:read'
+  | 'automation:manage';
 
 const ALL_READ: Permission[] = [
   'lead:read',
@@ -58,6 +61,7 @@ const MANAGER: Permission[] = [
   'task:delete',
   'member:invite',
   'audit:read',
+  'automation:read',
 ];
 
 const ADMIN: Permission[] = [
@@ -65,6 +69,7 @@ const ADMIN: Permission[] = [
   'org:update',
   'member:remove',
   'member:role:update',
+  'automation:manage',
 ];
 
 const OWNER: Permission[] = [...ADMIN, 'org:delete'];

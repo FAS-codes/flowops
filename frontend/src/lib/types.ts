@@ -88,6 +88,46 @@ export interface Activity {
   createdAt: string;
 }
 
+export type TriggerEvent =
+  | 'lead.created'
+  | 'lead.stage_changed'
+  | 'deal.won'
+  | 'task.created'
+  | 'task.completed';
+
+export type ConditionOperator = 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains';
+export type ActionType = 'create_task' | 'create_project' | 'notify' | 'send_email';
+
+export interface AutomationCondition {
+  field: string;
+  operator: ConditionOperator;
+  value: string;
+}
+
+export interface AutomationAction {
+  type: ActionType;
+  projectId?: string;
+  title?: string;
+  priority?: string;
+  name?: string;
+  target?: 'entity_owner' | 'entity_creator';
+  body?: string;
+  to?: string;
+  subject?: string;
+}
+
+export interface Automation {
+  _id: string;
+  name: string;
+  enabled: boolean;
+  trigger: { event: TriggerEvent; stage?: string };
+  conditions: AutomationCondition[];
+  actions: AutomationAction[];
+  runCount: number;
+  lastRunAt?: string;
+  createdAt: string;
+}
+
 export interface DashboardStats {
   leads: {
     total: number;

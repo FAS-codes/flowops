@@ -7,6 +7,7 @@ const TITLES: Record<string, string> = {
   '/app/crm': 'Sales Pipeline',
   '/app/projects': 'Projects',
   '/app/team': 'Team',
+  '/app/automations': 'Automations',
   '/app/audit': 'Audit Log',
 };
 

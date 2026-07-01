@@ -13,7 +13,9 @@ export type Permission =
   | 'project:delete'
   | 'task:create'
   | 'task:delete'
-  | 'audit:read';
+  | 'audit:read'
+  | 'automation:read'
+  | 'automation:manage';
 
 const MATRIX: Record<Role, Permission[]> = {
   viewer: [],
@@ -27,6 +29,7 @@ const MATRIX: Record<Role, Permission[]> = {
     'task:delete',
     'member:invite',
     'audit:read',
+    'automation:read',
   ],
   admin: [
     'lead:create',
@@ -38,6 +41,8 @@ const MATRIX: Record<Role, Permission[]> = {
     'member:invite',
     'member:manage',
     'audit:read',
+    'automation:read',
+    'automation:manage',
   ],
   owner: [
     'lead:create',
@@ -49,6 +54,8 @@ const MATRIX: Record<Role, Permission[]> = {
     'member:invite',
     'member:manage',
     'audit:read',
+    'automation:read',
+    'automation:manage',
   ],
 };
 

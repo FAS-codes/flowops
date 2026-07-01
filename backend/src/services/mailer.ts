@@ -83,6 +83,20 @@ export async function sendInvitationEmail(params: {
   });
 }
 
+/** Generic sender used by the automation engine's send_email action. */
+export async function sendGenericEmail(params: {
+  to: string;
+  subject: string;
+  text: string;
+}): Promise<void> {
+  await send({
+    to: params.to,
+    subject: params.subject,
+    text: params.text,
+    html: layout(params.subject, params.text.replace(/\n/g, '<br>')),
+  });
+}
+
 export async function sendWelcomeEmail(to: string, name: string): Promise<void> {
   await send({
     to,

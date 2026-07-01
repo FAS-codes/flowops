@@ -5,6 +5,7 @@ import { Organization } from '../models/Organization';
 import { AppError } from '../utils/AppError';
 import { logActivity } from '../services/activity.service';
 import { notify } from '../services/notification.service';
+import { runAutomations } from '../services/automation.service';
 import { emitToOrg } from '../realtime';
 
 export const createLeadSchema = z.object({
@@ -109,6 +110,12 @@ export async function createLead(req: Request, res: Response) {
       link: '/app/crm',
     });
   }
+  void runAutomations({
+    orgId: req.orgId!,
+    event: 'lead.created',
+    actorId: req.userId!,
+    entity: lead.toObject() as unknown as Record<string, unknown>,
+  });
 
   res.status(201).json(lead);
 }
@@ -176,6 +183,23 @@ export async function moveLead(req: Request, res: Response) {
       summary: `Moved "${lead.title}" from ${previousStage} to ${stage}`,
       metadata: { before: previousStage, after: stage },
     });
+
+    // Fire workflow automations for the stage change (and a "deal won" event).
+    void runAutomations({
+      orgId: req.orgId!,
+      event: 'lead.stage_changed',
+      actorId: req.userId!,
+      entity: lead.toObject() as unknown as Record<string, unknown>,
+      stage,
+    });
+    if (stage === 'Won') {
+      void runAutomations({
+        orgId: req.orgId!,
+        event: 'deal.won',
+        actorId: req.userId!,
+        entity: lead.toObject() as unknown as Record<string, unknown>,
+      });
+    }
   }
 
   emitToOrg(req.orgId!, 'lead:changed', { id: lead._id });
