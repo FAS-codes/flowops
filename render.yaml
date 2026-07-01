@@ -1,0 +1,30 @@
+# Render blueprint for the FlowOps API.
+# Import this repo at https://render.com → New → Blueprint. Render reads this file,
+# provisions the service, and prompts for the secret env vars marked sync:false.
+services:
+  - type: web
+    name: flowops-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: MONGODB_URI
+        sync: false # paste your MongoDB Atlas connection string
+      - key: CLIENT_URL
+        sync: false # your Vercel URL, e.g. https://flowops.vercel.app
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 7d
