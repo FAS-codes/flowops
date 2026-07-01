@@ -1,7 +1,10 @@
 import { Router } from 'express';
+import auditRoutes from './audit.routes';
 import authRoutes from './auth.routes';
 import dashboardRoutes from './dashboard.routes';
+import fileRoutes from './file.routes';
 import leadRoutes from './lead.routes';
+import notificationRoutes from './notification.routes';
 import orgRoutes from './org.routes';
 import projectRoutes from './project.routes';
 import taskRoutes from './task.routes';
@@ -15,5 +18,8 @@ router.use('/leads', leadRoutes);
 router.use('/projects', projectRoutes);
 router.use('/tasks', taskRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/files', fileRoutes);
+router.use('/audit', auditRoutes);
 
 export default router;

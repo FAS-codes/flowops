@@ -4,6 +4,8 @@ import { Project } from '../models/Project';
 import { Task, TASK_PRIORITIES, TASK_STATUSES } from '../models/Task';
 import { AppError } from '../utils/AppError';
 import { logActivity } from '../services/activity.service';
+import { notify } from '../services/notification.service';
+import { emitToOrg } from '../realtime';
 
 export const createTaskSchema = z.object({
   project: z.string().min(1),
@@ -67,6 +69,19 @@ export async function createTask(req: Request, res: Response) {
     summary: `Created task "${task.title}"`,
   });
 
+  emitToOrg(req.orgId!, 'task:changed', { project: task.project });
+  if (task.assignedTo) {
+    void notify({
+      organization: req.orgId!,
+      user: task.assignedTo,
+      actor: req.userId,
+      type: 'task.assigned',
+      title: 'New task assigned to you',
+      body: task.title,
+      link: `/app/projects/${task.project}`,
+    });
+  }
+
   res.status(201).json(task);
 }
 
@@ -78,8 +93,22 @@ async function findTaskInOrg(req: Request) {
 
 export async function updateTask(req: Request, res: Response) {
   const task = await findTaskInOrg(req);
+  const previousAssignee = task.assignedTo?.toString();
   Object.assign(task, req.body);
   await task.save();
+
+  emitToOrg(req.orgId!, 'task:changed', { project: task.project });
+  if (task.assignedTo && task.assignedTo.toString() !== previousAssignee) {
+    void notify({
+      organization: req.orgId!,
+      user: task.assignedTo,
+      actor: req.userId,
+      type: 'task.assigned',
+      title: 'A task was assigned to you',
+      body: task.title,
+      link: `/app/projects/${task.project}`,
+    });
+  }
   res.json(task);
 }
 
@@ -102,11 +131,13 @@ export async function moveTask(req: Request, res: Response) {
       metadata: { before: previous, after: status },
     });
   }
+  emitToOrg(req.orgId!, 'task:changed', { project: task.project });
   res.json(task);
 }
 
 export async function deleteTask(req: Request, res: Response) {
   const task = await findTaskInOrg(req);
   await task.deleteOne();
+  emitToOrg(req.orgId!, 'task:changed', { project: task.project });
   res.status(204).end();
 }

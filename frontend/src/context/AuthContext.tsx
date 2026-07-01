@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -58,7 +59,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [activeOrgId]);
 
   // Bootstrap: try to restore a session via the refresh cookie on first load.
+  // Guarded so React StrictMode's double effect-invoke doesn't fire two
+  // refreshes (the second would rotate the cookie and 401, clobbering the first).
+  const bootstrapped = useRef(false);
   useEffect(() => {
+    if (bootstrapped.current) return;
+    bootstrapped.current = true;
     (async () => {
       try {
         const { data } = await api.post('/auth/refresh');

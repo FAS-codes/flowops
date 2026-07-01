@@ -3,6 +3,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { FullPageLoader } from './components/ui/Spinner';
 import { useAuth } from './context/AuthContext';
 import { AcceptInvitePage } from './pages/AcceptInvitePage';
+import { AuditLogPage } from './pages/AuditLogPage';
 import { CrmBoardPage } from './pages/CrmBoardPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="projects/:projectId" element={<ProjectDetailPage />} />
         <Route path="team" element={<TeamPage />} />
+        <Route path="audit" element={<AuditLogPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/app/dashboard" replace />} />

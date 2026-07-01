@@ -70,7 +70,7 @@ npm run dev               # http://localhost:5173 (proxies /api to :4000)
 - ✅ Business dashboard — pipeline value, conversion, workload, activity feed
 - ✅ Production hygiene — Helmet, CORS, rate limiting, Zod validation, central errors
 
-## What's built (V2, in progress)
+## What's built (V2)
 
 - ✅ **Google OAuth** — server-side redirect flow with CSRF `state`, account
   linking by email, and auto-provisioned workspace for new users. Enabled by
@@ -78,8 +78,14 @@ npm run dev               # http://localhost:5173 (proxies /api to :4000)
   when configured.
 - ✅ **Email** — nodemailer service with branded invitation + welcome emails.
   Falls back to logging emails to the console in dev (no SMTP required).
+- ✅ **Real-time (Socket.IO)** — authenticated sockets in per-org rooms with
+  live board/dashboard updates, assignment notifications, and online presence.
+- ✅ **Notifications** — persisted per-user, pushed live, with an unread bell.
+- ✅ **File uploads** — attachments on projects (local-disk storage by default,
+  swappable for S3/Cloudinary), served with cross-origin headers.
+- ✅ **Audit log** — filterable trail with actor, action, and before/after values
+  (gated behind the `audit:read` permission).
 
 ## Roadmap
 
-- **V2 (remaining):** real-time (Socket.IO), file uploads, audit-log UI
 - **V3:** workflow automation builder, BullMQ/Redis jobs, subscriptions, tests, Docker, CI/CD

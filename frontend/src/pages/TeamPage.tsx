@@ -7,6 +7,7 @@ import { RoleBadge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Spinner } from '../components/ui/Spinner';
 import { useAuth } from '../context/AuthContext';
+import { useRealtime } from '../context/RealtimeContext';
 import { api, apiError } from '../lib/api';
 import { relativeTime } from '../lib/format';
 import { can } from '../lib/permissions';
@@ -119,8 +120,10 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
 function MemberRow({ member }: { member: Member }) {
   const qc = useQueryClient();
   const { role: myRole, user: me } = useAuth();
+  const { isOnline } = useRealtime();
   const canManage = can(myRole, 'member:manage') && member.role !== 'owner';
   const isMe = me?.id === member.user._id;
+  const online = isOnline(member.user._id);
 
   const changeRole = useMutation({
     mutationFn: async (newRole: Role) =>
@@ -145,7 +148,15 @@ function MemberRow({ member }: { member: Member }) {
     <tr className="border-t border-line">
       <td className="py-3 pl-5 pr-3">
         <div className="flex items-center gap-3">
-          <Avatar name={member.user.name} size="md" />
+          <span className="relative">
+            <Avatar name={member.user.name} size="md" />
+            {online && (
+              <span
+                className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-surface"
+                title="Online"
+              />
+            )}
+          </span>
           <div>
             <p className="text-sm font-medium text-ink">
               {member.user.name}

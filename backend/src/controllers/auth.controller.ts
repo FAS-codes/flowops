@@ -147,22 +147,25 @@ export async function refresh(req: Request, res: Response) {
     throw AppError.unauthorized('Invalid refresh token');
   }
 
-  const user = await User.findById(payload.sub).select('+refreshTokens');
+  const user = await User.findById(payload.sub).select('+refreshTokens').lean();
   if (!user) throw AppError.unauthorized();
 
   const stored = user.refreshTokens.find((t) => t.jti === payload.jti);
   if (!stored || stored.tokenHash !== hashToken(token)) {
     // Token not recognised — likely reuse of a rotated token. Revoke all.
-    user.refreshTokens = [];
-    await user.save();
+    // Atomic update (not save()) so concurrent refreshes don't hit a
+    // Mongoose VersionError racing on the refreshTokens array.
+    await User.updateOne({ _id: payload.sub }, { $set: { refreshTokens: [] } });
     throw AppError.unauthorized('Refresh token has been revoked');
   }
 
-  // Remove the used token before issuing a new one (rotation).
-  user.refreshTokens = user.refreshTokens.filter((t) => t.jti !== payload.jti);
-  await user.save();
+  // Atomically remove the used token before issuing a new one (rotation).
+  await User.updateOne(
+    { _id: payload.sub },
+    { $pull: { refreshTokens: { jti: payload.jti } } }
+  );
 
-  const accessToken = await issueTokens(req, res, user._id.toString());
+  const accessToken = await issueTokens(req, res, payload.sub);
   res.json({ accessToken });
 }
 

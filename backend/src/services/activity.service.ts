@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { Activity } from '../models/Activity';
+import { emitToOrg } from '../realtime';
 
 interface LogActivityInput {
   organization: string | Types.ObjectId;
@@ -18,7 +19,15 @@ interface LogActivityInput {
  */
 export async function logActivity(input: LogActivityInput): Promise<void> {
   try {
-    await Activity.create(input);
+    const doc = await Activity.create(input);
+    // Push to the org so dashboards/activity feeds update live.
+    emitToOrg(String(input.organization), 'activity:new', {
+      _id: doc._id,
+      action: doc.action,
+      entityType: doc.entityType,
+      summary: doc.summary,
+      createdAt: doc.createdAt,
+    });
   } catch (err) {
     console.error('[activity] failed to record activity', err);
   }

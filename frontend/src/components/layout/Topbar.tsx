@@ -3,6 +3,7 @@ import { Check, ChevronDown, LogOut, Building2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { NotificationBell } from '../../features/notifications/NotificationBell';
 import { RoleBadge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
 
@@ -125,6 +126,7 @@ export function Topbar({ title }: { title: string }) {
       <div className="flex items-center gap-3">
         <OrgSwitcher />
         <div className="h-6 w-px bg-line" />
+        <NotificationBell />
         <UserMenu />
       </div>
     </header>

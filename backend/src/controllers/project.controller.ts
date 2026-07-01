@@ -4,6 +4,7 @@ import { Project, PROJECT_STATUSES } from '../models/Project';
 import { Task } from '../models/Task';
 import { AppError } from '../utils/AppError';
 import { logActivity } from '../services/activity.service';
+import { emitToOrg } from '../realtime';
 
 export const createProjectSchema = z.object({
   name: z.string().min(1).max(160),
@@ -68,6 +69,7 @@ export async function createProject(req: Request, res: Response) {
     entityId: project._id,
     summary: `Created project "${project.name}"`,
   });
+  emitToOrg(req.orgId!, 'project:changed', { id: project._id });
   res.status(201).json(project);
 }
 
@@ -89,6 +91,7 @@ export async function updateProject(req: Request, res: Response) {
   const project = await findProjectInOrg(req);
   Object.assign(project, req.body);
   await project.save();
+  emitToOrg(req.orgId!, 'project:changed', { id: project._id });
   res.json(project);
 }
 
@@ -104,5 +107,6 @@ export async function deleteProject(req: Request, res: Response) {
     entityId: project._id,
     summary: `Deleted project "${project.name}"`,
   });
+  emitToOrg(req.orgId!, 'project:changed', { id: project._id });
   res.status(204).end();
 }

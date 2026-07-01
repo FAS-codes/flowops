@@ -3,10 +3,13 @@ import {
   KanbanSquare,
   LayoutDashboard,
   FolderKanban,
+  ScrollText,
   Users,
   Sparkles,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { can } from '../../lib/permissions';
 import { Logo } from '../Logo';
 
 const NAV = [
@@ -17,6 +20,13 @@ const NAV = [
 ];
 
 export function Sidebar() {
+  const { role } = useAuth();
+  const nav = [
+    ...NAV,
+    ...(can(role, 'audit:read')
+      ? [{ to: '/app/audit', label: 'Audit Log', icon: ScrollText }]
+      : []),
+  ];
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-line bg-surface lg:flex">
       <div className="flex h-16 items-center px-6">
@@ -27,7 +37,7 @@ export function Sidebar() {
         <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-ink-subtle">
           Workspace
         </p>
-        {NAV.map(({ to, label, icon: Icon }) => (
+        {nav.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}

@@ -22,6 +22,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ProjectStatusBadge, taskStatusLabel, TASK_STATUS_ORDER } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Spinner } from '../components/ui/Spinner';
+import { AttachmentsPanel } from '../features/files/AttachmentsPanel';
 import { useAuth } from '../context/AuthContext';
 import { SortableTaskCard, TaskCardView } from '../features/tasks/TaskCard';
 import { api, apiError } from '../lib/api';
@@ -320,6 +321,10 @@ export function ProjectDetailPage() {
           </DragOverlay>
         </DndContext>
       )}
+
+      <div className="mt-6 max-w-2xl">
+        <AttachmentsPanel entityType="Project" entityId={projectId} />
+      </div>
 
       <AddTaskModal open={open} onClose={() => setOpen(false)} projectId={projectId} />
     </div>

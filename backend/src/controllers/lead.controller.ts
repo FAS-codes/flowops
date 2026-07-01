@@ -4,6 +4,8 @@ import { Lead } from '../models/Lead';
 import { Organization } from '../models/Organization';
 import { AppError } from '../utils/AppError';
 import { logActivity } from '../services/activity.service';
+import { notify } from '../services/notification.service';
+import { emitToOrg } from '../realtime';
 
 export const createLeadSchema = z.object({
   title: z.string().min(1).max(160),
@@ -95,6 +97,19 @@ export async function createLead(req: Request, res: Response) {
     summary: `Created lead "${lead.title}"`,
   });
 
+  emitToOrg(req.orgId!, 'lead:changed', { id: lead._id });
+  if (lead.assignedTo) {
+    void notify({
+      organization: req.orgId!,
+      user: lead.assignedTo,
+      actor: req.userId,
+      type: 'lead.assigned',
+      title: 'New lead assigned to you',
+      body: lead.title,
+      link: '/app/crm',
+    });
+  }
+
   res.status(201).json(lead);
 }
 
@@ -115,9 +130,24 @@ export async function getLead(req: Request, res: Response) {
 export async function updateLead(req: Request, res: Response) {
   const lead = await findLeadInOrg(req);
   const body = req.body as z.infer<typeof updateLeadSchema>;
+  const previousAssignee = lead.assignedTo?.toString();
   Object.assign(lead, body);
   if (body.contactEmail === '') lead.contactEmail = undefined;
   await lead.save();
+
+  emitToOrg(req.orgId!, 'lead:changed', { id: lead._id });
+  // Notify only when the assignee actually changes to someone new.
+  if (lead.assignedTo && lead.assignedTo.toString() !== previousAssignee) {
+    void notify({
+      organization: req.orgId!,
+      user: lead.assignedTo,
+      actor: req.userId,
+      type: 'lead.assigned',
+      title: 'A lead was assigned to you',
+      body: lead.title,
+      link: '/app/crm',
+    });
+  }
   res.json(lead);
 }
 
@@ -148,6 +178,7 @@ export async function moveLead(req: Request, res: Response) {
     });
   }
 
+  emitToOrg(req.orgId!, 'lead:changed', { id: lead._id });
   res.json(lead);
 }
 
@@ -162,5 +193,6 @@ export async function deleteLead(req: Request, res: Response) {
     entityId: lead._id,
     summary: `Deleted lead "${lead.title}"`,
   });
+  emitToOrg(req.orgId!, 'lead:changed', { id: lead._id });
   res.status(204).end();
 }
