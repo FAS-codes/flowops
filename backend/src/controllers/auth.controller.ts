@@ -1,9 +1,12 @@
 import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { env } from '../config/env';
+import { env, primaryClientUrl } from '../config/env';
 import { Organization, DEFAULT_PIPELINE_STAGES } from '../models/Organization';
 import { OrganizationMember } from '../models/OrganizationMember';
-import { User, hashPassword } from '../models/User';
+import { User, UserDocument, hashPassword } from '../models/User';
+import { sendWelcomeEmail } from '../services/mailer';
+import { buildConsentUrl, exchangeCodeForProfile } from '../services/google';
 import { AppError } from '../utils/AppError';
 import { slugify } from '../utils/slugify';
 import {
@@ -13,6 +16,24 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from '../utils/tokens';
+
+/** Creates an organization owned by the user and sets it as their default. */
+async function createDefaultWorkspace(user: UserDocument, orgName: string) {
+  const org = await Organization.create({
+    name: orgName,
+    slug: await slugify(orgName),
+    createdBy: user._id,
+    pipelineStages: DEFAULT_PIPELINE_STAGES,
+  });
+  await OrganizationMember.create({
+    organization: org._id,
+    user: user._id,
+    role: 'owner',
+  });
+  user.defaultOrganization = org._id;
+  await user.save();
+  return org;
+}
 
 const REFRESH_COOKIE = 'flowops_refresh';
 
@@ -79,23 +100,11 @@ export async function register(req: Request, res: Response) {
     name,
     email,
     passwordHash: await hashPassword(password),
+    authProvider: 'local',
   });
 
-  const org = await Organization.create({
-    name: organizationName,
-    slug: await slugify(organizationName),
-    createdBy: user._id,
-    pipelineStages: DEFAULT_PIPELINE_STAGES,
-  });
-
-  await OrganizationMember.create({
-    organization: org._id,
-    user: user._id,
-    role: 'owner',
-  });
-
-  user.defaultOrganization = org._id;
-  await user.save();
+  const org = await createDefaultWorkspace(user, organizationName);
+  void sendWelcomeEmail(user.email, user.name).catch(() => undefined);
 
   const accessToken = await issueTokens(req, res, user._id.toString());
   res.status(201).json({
@@ -193,4 +202,74 @@ export async function me(req: Request, res: Response) {
       role: m.role,
     })),
   });
+}
+
+/** Public feature flags the login/register screens use to render conditionally. */
+export async function authConfig(_req: Request, res: Response) {
+  res.json({ googleEnabled: env.google.enabled });
+}
+
+// --- Google OAuth (server-side redirect flow) -----------------------------
+
+/** Step 1: redirect the browser to Google's consent screen. */
+export async function googleStart(_req: Request, res: Response) {
+  if (!env.google.enabled) {
+    throw AppError.badRequest('Google sign-in is not configured on this server');
+  }
+  // Signed, short-lived state token guards against CSRF on the callback.
+  const state = jwt.sign({ p: 'google' }, env.jwt.accessSecret, { expiresIn: '10m' });
+  res.redirect(buildConsentUrl(state));
+}
+
+/**
+ * Step 2: Google redirects back here with a code. We verify state, exchange the
+ * code for the user's profile, find-or-create the account, set the refresh
+ * cookie, then bounce to the SPA — which restores the session via /auth/refresh.
+ */
+export async function googleCallback(req: Request, res: Response) {
+  const clientUrl = primaryClientUrl();
+  const fail = (reason: string) =>
+    res.redirect(`${clientUrl}/login?error=${encodeURIComponent(reason)}`);
+
+  const { code, state, error } = req.query as Record<string, string>;
+  if (error) return fail('google_denied');
+  if (!code || !state) return fail('google_invalid');
+
+  try {
+    jwt.verify(state, env.jwt.accessSecret);
+  } catch {
+    return fail('google_state');
+  }
+
+  let profile;
+  try {
+    profile = await exchangeCodeForProfile(code);
+  } catch {
+    return fail('google_exchange');
+  }
+
+  // Find by googleId, else link an existing local account by email, else create.
+  let user = await User.findOne({ googleId: profile.googleId });
+  if (!user) {
+    user = await User.findOne({ email: profile.email });
+    if (user) {
+      user.googleId = profile.googleId;
+      if (!user.avatarUrl) user.avatarUrl = profile.picture;
+      await user.save();
+    } else {
+      user = await User.create({
+        name: profile.name,
+        email: profile.email,
+        authProvider: 'google',
+        googleId: profile.googleId,
+        avatarUrl: profile.picture,
+      });
+      const first = profile.name.split(' ')[0];
+      await createDefaultWorkspace(user, `${first}'s Workspace`);
+      void sendWelcomeEmail(user.email, user.name).catch(() => undefined);
+    }
+  }
+
+  await issueTokens(req, res, user._id.toString());
+  return res.redirect(`${clientUrl}/app/dashboard`);
 }

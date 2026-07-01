@@ -8,6 +8,9 @@ const router = Router();
 
 router.post('/register', validateBody(auth.registerSchema), asyncHandler(auth.register));
 router.post('/login', validateBody(auth.loginSchema), asyncHandler(auth.login));
+router.get('/config', asyncHandler(auth.authConfig));
+router.get('/google', asyncHandler(auth.googleStart));
+router.get('/google/callback', asyncHandler(auth.googleCallback));
 router.post('/refresh', asyncHandler(auth.refresh));
 router.post('/logout', asyncHandler(auth.logout));
 router.get('/me', requireAuth, asyncHandler(auth.me));

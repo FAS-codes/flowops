@@ -1,17 +1,36 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthShell } from '../components/AuthShell';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { Spinner } from '../components/ui/Spinner';
 import { useAuth } from '../context/AuthContext';
 import { apiError } from '../lib/api';
 
+const OAUTH_ERRORS: Record<string, string> = {
+  google_denied: 'Google sign-in was cancelled.',
+  google_invalid: 'Google sign-in failed. Please try again.',
+  google_state: 'Your sign-in session expired. Please try again.',
+  google_exchange: "Couldn't verify your Google account. Please try again.",
+};
+
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Surface an OAuth failure passed back as ?error= from the Google callback.
+  useEffect(() => {
+    const err = params.get('error');
+    if (err) {
+      toast.error(OAUTH_ERRORS[err] ?? 'Sign-in failed. Please try again.');
+      params.delete('error');
+      setParams(params, { replace: true });
+    }
+  }, [params, setParams]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,6 +58,8 @@ export function LoginPage() {
           Sign in to your FlowOps workspace.
         </p>
       </div>
+
+      <GoogleSignInButton />
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>

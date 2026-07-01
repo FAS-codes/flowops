@@ -2,6 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthShell } from '../components/AuthShell';
+import { GoogleSignInButton } from '../components/GoogleSignInButton';
 import { Spinner } from '../components/ui/Spinner';
 import { useAuth } from '../context/AuthContext';
 import { apiError } from '../lib/api';
@@ -48,6 +49,8 @@ export function RegisterPage() {
           Set up your organization in under a minute.
         </p>
       </div>
+
+      <GoogleSignInButton />
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div>

@@ -10,11 +10,17 @@ export interface RefreshTokenEntry {
   expiresAt: Date;
 }
 
+export type AuthProvider = 'local' | 'google';
+
 export interface UserDocument extends Document {
   _id: Types.ObjectId;
   name: string;
   email: string;
-  passwordHash: string;
+  // Optional: Google (OAuth) accounts have no local password.
+  passwordHash?: string;
+  authProvider: AuthProvider;
+  googleId?: string;
+  avatarUrl?: string;
   defaultOrganization?: Types.ObjectId;
   refreshTokens: RefreshTokenEntry[];
   createdAt: Date;
@@ -45,7 +51,10 @@ const userSchema = new Schema<UserDocument>(
       trim: true,
       index: true,
     },
-    passwordHash: { type: String, required: true, select: false },
+    passwordHash: { type: String, select: false },
+    authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
+    googleId: { type: String, index: { unique: true, sparse: true } },
+    avatarUrl: String,
     defaultOrganization: { type: Schema.Types.ObjectId, ref: 'Organization' },
     refreshTokens: { type: [refreshTokenSchema], default: [], select: false },
   },
@@ -53,6 +62,7 @@ const userSchema = new Schema<UserDocument>(
 );
 
 userSchema.methods.comparePassword = function (candidate: string) {
+  if (!this.passwordHash) return Promise.resolve(false);
   return bcrypt.compare(candidate, this.passwordHash);
 };
 

@@ -7,6 +7,7 @@ import { User } from '../models/User';
 import { AppError } from '../utils/AppError';
 import { ROLES } from '../utils/rbac';
 import { logActivity } from '../services/activity.service';
+import { sendInvitationEmail } from '../services/mailer';
 
 export const inviteSchema = z.object({
   email: z.string().email(),
@@ -72,7 +73,20 @@ export async function invite(req: Request, res: Response) {
     summary: `Invited ${email} as ${role}`,
   });
 
-  // In V2 this token is emailed; for now we return the accept link directly.
+  // Send the invitation email (no-op console log in dev if SMTP isn't set up).
+  const [org, inviter] = await Promise.all([
+    Organization.findById(req.orgId).lean(),
+    User.findById(req.userId).lean(),
+  ]);
+  void sendInvitationEmail({
+    to: email,
+    orgName: org?.name ?? 'a workspace',
+    inviterName: inviter?.name ?? 'A teammate',
+    role,
+    token,
+  }).catch((err) => console.error('[mailer] invitation email failed', err));
+
+  // Also return the accept link so it works even without email configured.
   res.status(201).json({
     id: invitation._id,
     email,

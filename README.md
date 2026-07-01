@@ -70,7 +70,16 @@ npm run dev               # http://localhost:5173 (proxies /api to :4000)
 - ✅ Business dashboard — pipeline value, conversion, workload, activity feed
 - ✅ Production hygiene — Helmet, CORS, rate limiting, Zod validation, central errors
 
-## Roadmap (from the original spec)
+## What's built (V2, in progress)
 
-- **V2:** real-time (Socket.IO), Google OAuth, email invitations, file uploads, audit log UI
+- ✅ **Google OAuth** — server-side redirect flow with CSRF `state`, account
+  linking by email, and auto-provisioned workspace for new users. Enabled by
+  setting `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`; the UI shows the button only
+  when configured.
+- ✅ **Email** — nodemailer service with branded invitation + welcome emails.
+  Falls back to logging emails to the console in dev (no SMTP required).
+
+## Roadmap
+
+- **V2 (remaining):** real-time (Socket.IO), file uploads, audit-log UI
 - **V3:** workflow automation builder, BullMQ/Redis jobs, subscriptions, tests, Docker, CI/CD
