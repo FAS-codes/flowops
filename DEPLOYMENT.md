@@ -62,15 +62,40 @@ The three platforms all have free tiers. You'll do this once; afterwards every
 2. Done. The cross-site refresh cookie already switches to `SameSite=None; Secure`
    automatically in production (`NODE_ENV=production`).
 
-## Push to GitHub
+## Optional — enable Google sign-in & email later
+
+The app is fully functional without these; enable them any time by adding env
+vars on Render (no code changes, just a redeploy):
+
+- **Google OAuth:** create an OAuth client at
+  <https://console.cloud.google.com/apis/credentials>, then on Render set
+  `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and
+  `GOOGLE_CALLBACK_URL=https://flowops-api.onrender.com/api/auth/google/callback`
+  (add that same URL as an Authorized redirect URI in Google). The "Continue with
+  Google" button appears automatically once configured.
+- **Email:** set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`
+  (Resend, Mailgun, SendGrid, or a Gmail app password). Until then, invitation
+  links still work — they're shown in the UI and logged server-side.
+
+> **Heads-up about uploaded files:** Render's free tier has an *ephemeral* disk,
+> so files uploaded via the Attachments panel are wiped on each redeploy/restart.
+> That's fine for a demo. For permanent storage, swap the storage backend in
+> `backend/src/controllers/file.controller.ts` for S3 or Cloudinary (the code is
+> structured for it).
+
+## GitHub
+
+The repo already lives at <https://github.com/FAS-codes/flowops> (private).
+Render/Vercel import straight from it; future changes deploy on `git push`:
 
 ```bash
 cd /Users/fas/Desktop/flowops
-gh repo create flowops --private --source=. --remote=origin
-git add -A
-git commit -m "FlowOps V1"
-git push -u origin main
+git add -A && git commit -m "your change" && git push
 ```
+
+> Render and Vercel need access to the repo. Since it's **private**, you'll grant
+> each platform access to `FAS-codes/flowops` during import (or make the repo
+> public first — good for showing recruiters anyway).
 
 ## Troubleshooting
 

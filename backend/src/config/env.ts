@@ -15,7 +15,11 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   clientUrl: process.env.CLIENT_URL ?? 'http://localhost:5173',
   mongoUri: required('MONGODB_URI', 'mongodb://127.0.0.1:27017/flowops'),
-  apiUrl: process.env.API_URL ?? 'http://localhost:4000',
+  // Public URL of this API, used to build absolute file-upload URLs and the
+  // OAuth callback. Render injects RENDER_EXTERNAL_URL automatically, so prod
+  // works with no manual config.
+  apiUrl:
+    process.env.API_URL ?? process.env.RENDER_EXTERNAL_URL ?? 'http://localhost:4000',
   jwt: {
     accessSecret: required('JWT_ACCESS_SECRET', 'dev_access_secret_change_me'),
     refreshSecret: required('JWT_REFRESH_SECRET', 'dev_refresh_secret_change_me'),
